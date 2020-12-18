@@ -13,11 +13,15 @@ const {
   QUESTION_QUIZ_NEGATIVE,
   ERROR_URL,
   ERROR_BISECTION,
+  END_GAME
 } = require("./quiz-strings");
 
 let numQuestion;
 let maxFrames;
-let currentFrame;
+
+let limitLeft = 0;
+let limitRight = 0;
+let mid = 0;
 
 async function wellcome(ctx) {
   const keyboardMenu = Markup.keyboard([[START_BUTTON]])
@@ -28,13 +32,13 @@ async function wellcome(ctx) {
 }
 
 async function startQuiz(ctx) {
+  endQuiz(ctx)
   numQuestion = 0;
   maxFrames = await loadFrame.getMaxFrames();
-  currentFrame = maxFrames;
-  if (!maxFrames) {
-    ctx.reply(ERROR_URL, { parse_mode: "HTML" });
-  }
-  console.log(`Num. Frames: ${maxFrames}`);
+  maxFrames >= 1
+    ? (limitRight = maxFrames - 1)
+    : ctx.reply(ERROR_URL, { parse_mode: "HTML" });
+
   const keyboardMenu = Markup.keyboard([[RESTART_BUTTON]])
     .oneTime()
     .resize()
@@ -42,44 +46,27 @@ async function startQuiz(ctx) {
   ctx.reply(START_GAME_MESSAGE, keyboardMenu);
   generateQuestion(ctx);
 }
-let left = 0;
-let right = 0;
-function getNewFrame(numFrames, ctx) {
-  if (numFrames < 1) {
-    console.error(ERROR_BISECTION);
-    ctx.reply(ERROR_BISECTION, { parse_mode: "HTML" });
-    return;
-  }
 
-  left = 0;
-  right = numFrames === maxFrames ? numFrames - 1 : numFrames;
-
-  let mid = Math.trunc((left + right) / 2);
-  console.log((left + right) / 2);
-  // console.log(mid)
-  return mid;
-}
-function checkIfFinishOrGenerateNewQuestion(ctx) {
-  console.log(left+1 + " < "+ currentFrame)
-  if (left + 1 < currentFrame) {
-    generateQuestion(ctx);
-  } else {
-    endQuiz(ctx);
-  }
-}
-
-async function endQuiz(ctx) {
-  ``;
-  ctx.reply(`Found! Take-off = ${currentFrame}`);
-}
 async function generateQuestion(ctx) {
+  function getNewFrame(ctx) {
+    if (limitRight < 1) {
+      console.error(ERROR_BISECTION);
+      ctx.reply(ERROR_BISECTION, { parse_mode: "HTML" });
+      return;
+    }
+
+    mid = Math.trunc((limitLeft + limitRight) / 2);
+
+    // console.log(`Bisection: ${limitLeft} - ${limitRight} || Mid: ${mid}`)
+    return mid;
+  }
+
   numQuestion++;
-  currentFrame = getNewFrame(currentFrame, ctx);
   return ctx.telegram.sendPhoto(
     ctx.chat.id,
-    { url: loadFrame.getURLFrameByID(currentFrame) },
+    { url: loadFrame.getURLFrameByID(getNewFrame(ctx)) },
     {
-      caption: parameterizedString(QUESTION_QUIZ, numQuestion, currentFrame),
+      caption: parameterizedString(QUESTION_QUIZ, numQuestion, mid),
       parse_mode: "Markdown",
       reply_markup: Markup.inlineKeyboard([
         Markup.callbackButton("Yes ✅", ANSWER_YES),
@@ -92,27 +79,44 @@ async function generateQuestion(ctx) {
 async function afirmativeAnswer(ctx) {
   await ctx.answerCbQuery();
   await ctx.editMessageCaption(
-    parameterizedString(QUESTION_QUIZ_AFIRMATIVE, numQuestion, currentFrame),
+    parameterizedString(QUESTION_QUIZ_AFIRMATIVE, numQuestion, mid),
     {
       parse_mode: "HTML",
     }
   );
-  await checkIfFinishOrGenerateNewQuestion(ctx);
+  await checkIfFinishOrGenerateNewQuestion(ctx, true);
 }
 
 async function negaiveAnswer(ctx) {
   await ctx.answerCbQuery();
   await ctx.editMessageCaption(
-    parameterizedString(QUESTION_QUIZ_NEGATIVE, numQuestion, currentFrame),
+    parameterizedString(QUESTION_QUIZ_NEGATIVE, numQuestion, mid),
     {
       parse_mode: "HTML",
     }
   );
-  await checkIfFinishOrGenerateNewQuestion(ctx);
+  await checkIfFinishOrGenerateNewQuestion(ctx, false);
 }
 
-async function test(ctx) {
-  ctx.reply("THIS IS A TEST");
+function checkIfFinishOrGenerateNewQuestion(ctx, previousAnswer) {
+  console.log(`---->: ${limitLeft} - ${limitRight} || Mid: ${mid} | ${previousAnswer}`)
+  if (!previousAnswer) {
+    limitLeft = mid;
+  }else {
+    limitRight = mid
+  }
+  if (limitLeft + 1 < limitRight) {
+    generateQuestion(ctx);
+  } else {
+    endQuiz(ctx);
+  }
+}
+
+async function endQuiz(ctx) {
+  ctx.telegram.sendAnimation(ctx.chat.id, "https://media.giphy.com/media/xT0xezQGU5xCDJuCPe/giphy.gif", {
+    caption: parameterizedString(END_GAME, limitRight),
+    parse_mode: "HTML"
+  })
 }
 
 module.exports = {
@@ -120,5 +124,4 @@ module.exports = {
   startQuiz,
   afirmativeAnswer,
   negaiveAnswer,
-  test,
 };
