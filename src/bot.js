@@ -12,7 +12,7 @@ const {
   START_BUTTON,
   ANSWER_YES,
   ANSWER_NO,
-} = require("./quiz-strings");
+} = require("./resources/messages-properties");
 
 // const conf = require('ocore/co/nf.js');
 

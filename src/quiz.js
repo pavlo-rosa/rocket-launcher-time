@@ -1,6 +1,6 @@
 const { Router, Markup, Extra } = require("telegraf");
-const { parseStr, parameterizedString } = require("./utils");
-const loadFrame = require("./load-frame");
+const { parseStr, parameterizedString } = require("./utils/utils");
+const loadFrame = require("./utils/load-frame");
 const {
   WELLCOME_MESSAGE,
   RESTART_BUTTON,
@@ -14,7 +14,7 @@ const {
   ERROR_URL,
   ERROR_BISECTION,
   END_GAME
-} = require("./quiz-strings");
+} = require("./resources/messages-properties");
 
 let numQuestion;
 let maxFrames;

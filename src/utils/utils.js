@@ -1,9 +1,3 @@
-function parseStr(str) {
-    var args = [].slice.call(arguments, 1),
-        i = 0;
-
-    return str.replace(/%d/g, () => args[i++]);
-}
 
 const parameterizedString = (...args) => {
     const str = args[0];
@@ -16,6 +10,5 @@ const parameterizedString = (...args) => {
 }
 
 module.exports={
-    parseStr,
     parameterizedString
 }

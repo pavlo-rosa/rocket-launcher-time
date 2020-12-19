@@ -2,11 +2,11 @@
   "name": "rocket-launcher-time",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "start": "node app.js",
     "run-test": "nodemon test.js",
-    "run-dev": "nodemon index.js",
+    "run-dev": "nodemon src/index.js",
     "dev": "nodemon app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
