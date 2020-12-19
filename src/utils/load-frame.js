@@ -1,4 +1,5 @@
 const config = require('../config/config')
+const logger = require('../config/logger')('src/utils/load-frame.js');
 const got = require('got');
 
 //Development environment call to fake data
@@ -15,7 +16,7 @@ async function getMaxFrames() {
             return body.frames;
         }
     } catch (error) {
-        console.error(error.response.body);
+        logger.error(error.response.body);
     }
 }
 

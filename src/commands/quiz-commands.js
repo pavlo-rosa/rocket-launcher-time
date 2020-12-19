@@ -1,3 +1,4 @@
+const logger = require('../config/logger')('src/commands/quiz-commands.js');
 const { Markup } = require('telegraf');
 const { parameterizedString } = require('../utils/utils');
 const loadFrame = require('../utils/load-frame');
@@ -17,7 +18,7 @@ const {
 } = require('../resources/messages-properties');
 
 async function startQuiz(ctx) {
-    const success = await quiz.initGame(ctx);
+    const success = await quiz.initGame(ctx.chat.id);
     if (!success) {
         ctx.reply(ERROR_URL, { parse_mode: 'HTML' });
         return;
@@ -31,9 +32,9 @@ async function startQuiz(ctx) {
 }
 
 async function generateQuestion(ctx) {
-    const newFrame = quiz.calculateNewFrame();
+    const newFrame = await quiz.calculateNewFrame(ctx.chat.id);
     if (!newFrame) {
-        console.error(ERROR_BISECTION);
+        logger.error(ERROR_BISECTION);
         ctx.reply(ERROR_BISECTION, { parse_mode: 'HTML' });
         return;
     }
@@ -41,7 +42,7 @@ async function generateQuestion(ctx) {
         ctx.chat.id,
         { url: loadFrame.getURLFrameByID(newFrame) },
         {
-            caption: parameterizedString(QUESTION_QUIZ, quiz.getIncrementedNumQuestion(), newFrame),
+            caption: parameterizedString(QUESTION_QUIZ, await quiz.getIncrementedNumQuestion(ctx.chat.id), newFrame),
             parse_mode: 'Markdown',
             reply_markup: Markup.inlineKeyboard([
                 Markup.callbackButton('Yes ✅', ANSWER_YES),
@@ -52,25 +53,25 @@ async function generateQuestion(ctx) {
 }
 
 async function afirmativeAnswer(ctx) {
-    const dataQuestion = quiz.getCurrentQuestionData()
+    const dataQuestion = await quiz.getCurrentQuestionData(ctx.chat.id)
     await ctx.answerCbQuery();
     await ctx.editMessageCaption(parameterizedString(QUESTION_QUIZ_AFIRMATIVE, dataQuestion.numQuestion, dataQuestion.currentFrame), {
         parse_mode: 'HTML',
     });
-    quiz.checkFinishGame(true, dataQuestion.currentFrame) ? endQuiz(ctx) : generateQuestion(ctx);
+    await quiz.checkFinishGame(true, dataQuestion.currentFrame, ctx.chat.id) ? endQuiz(ctx) : generateQuestion(ctx);
 }
 
 async function negaiveAnswer(ctx) {
-    const dataQuestion = quiz.getCurrentQuestionData()
+    const dataQuestion = await quiz.getCurrentQuestionData(ctx.chat.id)
     await ctx.answerCbQuery();
     await ctx.editMessageCaption(parameterizedString(QUESTION_QUIZ_NEGATIVE, dataQuestion.numQuestion, dataQuestion.currentFrame), {
         parse_mode: 'HTML',
     });
-    quiz.checkFinishGame(false, dataQuestion.currentFrame) ? endQuiz(ctx) : generateQuestion(ctx);
+    await quiz.checkFinishGame(false, dataQuestion.currentFrame, ctx.chat.id) ? endQuiz(ctx) : generateQuestion(ctx);
 }
 
 async function endQuiz(ctx) {
-    const dataQuestion = quiz.getCurrentQuestionData()
+    const dataQuestion = await quiz.getCurrentQuestionData(ctx.chat.id)
     ctx.telegram.sendAnimation(ctx.chat.id, 'https://media.giphy.com/media/xT0xezQGU5xCDJuCPe/giphy.gif', {
         caption: parameterizedString(END_GAME, dataQuestion.limitRight),
         parse_mode: 'HTML',

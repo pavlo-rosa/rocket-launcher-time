@@ -1,5 +1,4 @@
-const config = require('./config/config');
-
-//TODO: Create Sessions
+require('./config/config');
 const bot = require('./controllers/bot');
+
 bot.launch();

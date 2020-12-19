@@ -1,43 +1,57 @@
 const loadFrame = require('../utils/load-frame');
+const redis = require('../helpers/redis');
 
-let numQuestion = 0;
-let maxFrames = 0;
-let limitRight = 0;
-let limitLeft = 0;
-let mid = 0;
-
-async function initGame() {
-    numQuestion = 0;
-    maxFrames = await loadFrame.getMaxFrames();
+async function initGame(chatId) {
+    const keyCache = `chat_${chatId}`;
+    const maxFrames = await loadFrame.getMaxFrames();
     if (maxFrames >= 1) {
         limitRight = maxFrames - 1;
+        redis.setCache(keyCache, { numQuestion: 0, maxFrames, limitLeft: 0, limitRight, currentFrame: 0 });
         return true;
     } else {
+        redis.setCache(keyCache, null);
         return false;
     }
 }
 
-function calculateNewFrame() {
-    if (limitRight < 1) {
+async function calculateNewFrame(chatId) {
+    const keyCache = `chat_${chatId}`;
+    let data = await redis.getCache(keyCache);
+
+    if (!data || data.limitRight < 1 ) {
         return null;
     }
-    mid = Math.trunc((limitLeft + limitRight) / 2);
+    mid = Math.trunc((data.limitLeft + data.limitRight) / 2);
+
+    data.currentFrame = mid;
+    redis.setCache(keyCache, data);
     return mid;
 }
 
-function getIncrementedNumQuestion() {
-    //TODO: by chatID
-    return ++numQuestion;
+async function getIncrementedNumQuestion(chatId) {
+    const keyCache = `chat_${chatId}`;
+    let data = await redis.getCache(keyCache);
+
+    data.numQuestion = data.numQuestion + 1;
+
+    redis.setCache(keyCache, data);
+
+    return data.numQuestion;
 }
 
-function checkFinishGame(previousAnswer, previousFrame) {
-    console.log(`---->: ${limitLeft} - ${limitRight} || Mid: ${mid} | ${previousAnswer}`);
+async function checkFinishGame(previousAnswer, previousFrame, chatId) {
+    const keyCache = `chat_${chatId}`;
+    let data = await redis.getCache(keyCache);
+
     if (!previousAnswer) {
-        limitLeft = previousFrame;
+        data.limitLeft = previousFrame;
     } else {
-        limitRight = previousFrame;
+        data.limitRight = previousFrame;
     }
-    if (limitLeft + 1 < limitRight) {
+
+    redis.setCache(keyCache, data);
+
+    if (data.limitLeft + 1 < data.limitRight) {
         //Generate new question
         return false;
     } else {
@@ -46,13 +60,9 @@ function checkFinishGame(previousAnswer, previousFrame) {
     }
 }
 
-function getCurrentQuestionData() {
-    return {
-        numQuestion,
-        currentFrame: mid,
-        limitLeft,
-        limitRight,
-    };
+async function getCurrentQuestionData(chatId) {
+    const keyCache = `chat_${chatId}`;
+    return await redis.getCache(keyCache);
 }
 
 module.exports = {
