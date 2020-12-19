@@ -1,9 +1,8 @@
 const { Markup } = require('telegraf');
 const { parameterizedString } = require('../utils/utils');
 const loadFrame = require('../utils/load-frame');
-const quiz = require('./quiz');
+const quiz = require('../helpers/quiz');
 const {
-    WELLCOME_MESSAGE,
     RESTART_BUTTON,
     START_BUTTON,
     START_GAME_MESSAGE,
@@ -16,14 +15,6 @@ const {
     ERROR_BISECTION,
     END_GAME,
 } = require('../resources/messages-properties');
-
-async function wellcome(ctx) {
-    const keyboardMenu = Markup.keyboard([[START_BUTTON]])
-        .oneTime()
-        .resize()
-        .extra();
-    ctx.reply(WELLCOME_MESSAGE, keyboardMenu);
-}
 
 async function startQuiz(ctx) {
     const success = await quiz.initGame(ctx);
@@ -87,7 +78,6 @@ async function endQuiz(ctx) {
 }
 
 module.exports = {
-    wellcome,
     startQuiz,
     afirmativeAnswer,
     negaiveAnswer,
