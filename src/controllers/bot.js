@@ -6,13 +6,13 @@ const {
   wellcome,
   afirmativeAnswer,
   negaiveAnswer,
-} = require("./quiz");
+} = require("../helpers/bot-commands");
 const {
   RESTART_BUTTON,
   START_BUTTON,
   ANSWER_YES,
   ANSWER_NO,
-} = require("./resources/messages-properties");
+} = require("../resources/messages-properties");
 
 // const conf = require('ocore/co/nf.js');
 
