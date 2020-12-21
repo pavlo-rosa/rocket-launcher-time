@@ -1,4 +1,4 @@
-const loadFrame = require('../utils/load-frame');
+const loadFrame = require('./load-frame');
 const redis = require('../helpers/redis');
 
 async function initGame(chatId) {

@@ -1,7 +1,7 @@
 const logger = require('../config/logger')('src/commands/quiz-commands.js');
 const { Markup } = require('telegraf');
 const { parameterizedString } = require('../utils/utils');
-const loadFrame = require('../utils/load-frame');
+const loadFrame = require('../helpers/load-frame');
 const quiz = require('../helpers/quiz');
 const {
     RESTART_BUTTON,
